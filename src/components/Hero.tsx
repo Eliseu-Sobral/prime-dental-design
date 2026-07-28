@@ -11,9 +11,10 @@ export function Hero() {
         alt="Recepção da clínica JB Odontologia Prime"
         width={1920}
         height={1088}
-        className="absolute inset-0 h-full w-full object-cover opacity-45"
+        className="absolute inset-0 h-full w-full scale-105 object-cover opacity-30 blur-[1px]"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/30" />
+      <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/90 to-ink/60" />
+
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 pt-32 pb-20">
         <img
