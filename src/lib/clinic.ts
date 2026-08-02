@@ -2,6 +2,10 @@ export const CLINIC = {
   name: "JB Odontologia Prime",
   doctor: "Dra. Juliana Viana",
   cro: "CROSP 123.456",
+  doctors: [
+    { name: "Dra. Juliana Viana", cro: "CROSP 123.456" },
+    { name: "Dra. Beatriz Almeida", cro: "CROSP 147206" },
+  ],
   phoneDisplay: "(11) 99999-0000",
   whatsappNumber: "5511999990000",
   instagram: "https://instagram.com/jbodontologiaprime",
