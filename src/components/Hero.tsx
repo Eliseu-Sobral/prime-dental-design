@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CLINIC, whatsappLink } from "@/lib/clinic";
 import heroImg from "@/assets/hero-clinica.jpg";
-import logo from "@/assets/jb-logo.jpeg.asset.json";
+import logo from "@/assets/jb-logo.png.asset.json";
 
 export function Hero() {
   return (
@@ -20,9 +20,9 @@ export function Hero() {
         <img
           src={logo.url}
           alt="Logo JB Odontologia Prime"
-          width={112}
-          height={112}
-          className="h-24 w-24 rounded-full object-cover shadow-gold md:h-28 md:w-28"
+          width={260}
+          height={198}
+          className="h-28 w-auto object-contain md:h-36"
         />
         <p className="eyebrow mt-8">Odontologia de alto padrão · Mauá — SP</p>
         <h1 className="mt-5 max-w-3xl text-4xl leading-[1.08] text-graphite-foreground sm:text-5xl md:text-6xl lg:text-7xl">

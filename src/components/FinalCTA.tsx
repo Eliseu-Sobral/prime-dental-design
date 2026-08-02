@@ -2,7 +2,7 @@ import { Instagram, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/Reveal";
 import { CLINIC, whatsappLink } from "@/lib/clinic";
-import logo from "@/assets/jb-logo.jpeg.asset.json";
+import logo from "@/assets/jb-logo.png.asset.json";
 
 export function FinalCTA() {
   return (
@@ -39,9 +39,9 @@ export function Footer() {
             src={logo.url}
             alt="JB Odontologia Prime"
             loading="lazy"
-            width={64}
-            height={64}
-            className="h-16 w-16 rounded-full object-cover"
+            width={210}
+            height={160}
+            className="h-20 w-auto object-contain"
           />
           <p className="mt-5 max-w-xs text-sm leading-relaxed text-graphite-foreground/60">
             Odontologia premium em Mauá. Excelência técnica e cuidado humano em cada sorriso.
@@ -81,7 +81,7 @@ export function Footer() {
           </h3>
           <p className="mt-5 text-sm text-graphite-foreground/70">{CLINIC.hours}</p>
           <p className="mt-2 text-sm text-graphite-foreground/70">
-            Responsável técnica: {CLINIC.doctor} — {CLINIC.cro}
+            {CLINIC.doctors.map((d) => `${d.name} — ${d.cro}`).join(" · ")}
           </p>
         </div>
       </div>

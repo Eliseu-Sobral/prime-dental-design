@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CLINIC, whatsappLink } from "@/lib/clinic";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/jb-logo.jpeg.asset.json";
+import logo from "@/assets/jb-logo.png.asset.json";
 
 const links = [
   { href: "#sobre", label: "A Clínica" },
@@ -36,9 +36,9 @@ export function Navbar() {
           <img
             src={logo.url}
             alt="JB Odontologia Prime"
-            width={48}
-            height={48}
-            className="h-11 w-11 rounded-full object-cover"
+            width={80}
+            height={61}
+            className="h-12 w-auto object-contain"
           />
           <span className="hidden font-display text-lg tracking-[0.18em] text-graphite-foreground sm:block">
             JB ODONTOLOGIA <span className="text-gold">PRIME</span>
