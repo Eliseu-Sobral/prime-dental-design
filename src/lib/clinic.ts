@@ -6,14 +6,15 @@ export const CLINIC = {
     { name: "Dra. Juliana Viana", cro: "CROSP 123.456" },
     { name: "Dra. Beatriz Almeida", cro: "CROSP 147206" },
   ],
-  phoneDisplay: "(11) 99999-0000",
-  whatsappNumber: "5511999990000",
+  phoneDisplay: "(11) 96351-5287",
+  whatsappNumber: "5511963515287",
   instagram: "https://instagram.com/jbodontologiaprime",
   instagramHandle: "@jbodontologiaprime",
-  address: "Av. Barão de Mauá, 1200 — Centro, Mauá — SP",
-  mapsUrl: "https://www.google.com/maps/search/?api=1&query=Av.+Barão+de+Mauá,+Mauá+-+SP",
+  address: "Rua Santa Paula, 47 — Jardim Oratório, Mauá — SP",
+  mapsUrl:
+    "https://www.google.com/maps/search/?api=1&query=Rua+Santa+Paula,+47,+Jardim+Orat%C3%B3rio,+Mau%C3%A1+-+SP",
   mapEmbed:
-    "https://www.google.com/maps?q=Av.%20Bar%C3%A3o%20de%20Mau%C3%A1%2C%20Mau%C3%A1%20-%20SP&output=embed",
+    "https://www.google.com/maps?q=Rua%20Santa%20Paula%2C%2047%20-%20Jardim%20Orat%C3%B3rio%2C%20Mau%C3%A1%20-%20SP&output=embed",
   hours: "Seg a Sex · 9h às 19h | Sáb · 9h às 13h",
 } as const;
 
