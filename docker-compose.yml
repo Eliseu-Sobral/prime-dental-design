@@ -2,6 +2,7 @@ services:
   # =============================================================================
   #  JB ODONTOLOGIA PRIME · TanStack Start / Nitro standalone
   #  PADRÃO IDÊNTICO AO PROJETO MAMAJULA / KAMEETECH QUE JÁ FUNCIONA
+  #  Ajustes anti-404: match em ambos domínios (c/ e s/ www) + HostAll() v3
   # =============================================================================
   jbprime:
     build:
@@ -18,6 +19,10 @@ services:
     environment:
       - NODE_ENV=production
       - TZ=America/Sao_Paulo
+      # ── anti 404/host mismatch no Nitro/TanStack CSRF ─────────────────
+      - NITRO_HOST=0.0.0.0
+      - NITRO_PORT=3000
+      - NITRO_ORIGIN=https://jbodontologiaprime.com.br
     networks:
       # ★ REDE CORRETA (mesma do projeto mamajula / kameetech que funciona)
       - portainer_default
@@ -28,43 +33,48 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 20s
 
     # =========================================================================
-    #  LABELS TRAEFIK · PADRÃO EXATO MAMAJULA / KAMEETECH
+    #  LABELS TRAEFIK · PADRÃO MAMAJULA / KAMEETECH
+    #  + anti-404: regra match em AMBOS os hosts (c/ e s/ www)
     # =========================================================================
     labels:
-      - 'traefik.enable=true'
-      - 'traefik.docker.network=portainer_default'
-      # Label legada (mantida igual mamajula, usa porta INTERNA do Nitro standalone)
-      - 'traefik.port=3000'
+      - "traefik.enable=true"
+      - "traefik.docker.network=portainer_default"
+      - "traefik.port=3000"
 
-      # ---------- Router: jbodontologiaprime.com.br ----------
-      - 'traefik.http.routers.jbprime.entrypoints=websecure'
-      # ★ FORMATO OBRIGATÓRIO (igual mamajula): Host(`SEU-DOMINIO`) com CRASES
-      - 'traefik.http.routers.jbprime.rule=Host(`jbodontologiaprime.com.br`)'
-      - 'traefik.http.routers.jbprime.service=jbprime'
-      # ★ TLS EXPLÍCITO (igual mamajula — faltava aqui antes)
-      - 'traefik.http.routers.jbprime.tls=true'
-      # ★ CERTRESOLVER CORRETO · nome real no seu Traefik (mesmo mamajula)
-      - 'traefik.http.routers.jbprime.tls.certresolver=leresolver'
+      # ---------- Router (DOMÍNIO SEM WWW) ----------
+      - "traefik.http.routers.jbprime.entrypoints=websecure"
+      - "traefik.http.routers.jbprime.rule=Host(`jbodontologiaprime.com.br`)"
+      - "traefik.http.routers.jbprime.service=jbprime"
+      - "traefik.http.routers.jbprime.tls=true"
+      - "traefik.http.routers.jbprime.tls.certresolver=leresolver"
+
+      # ---------- Router WWW (ANTI-404: também atende www.) ----------
+      #  Serve tanto www quanto o base — desativar o redirect só depois que ambos abrirem
+      - "traefik.http.routers.jbprime-www.entrypoints=websecure"
+      - "traefik.http.routers.jbprime-www.rule=Host(`www.jbodontologiaprime.com.br`)"
+      - "traefik.http.routers.jbprime-www.service=jbprime"
+      - "traefik.http.routers.jbprime-www.tls=true"
+      - "traefik.http.routers.jbprime-www.tls.certresolver=leresolver"
 
       # ---------- Service: jbprime ----------
-      - 'traefik.http.services.jbprime.loadbalancer.server.port=3000'
-      - 'traefik.http.services.jbprime.loadbalancer.server.scheme=http'
-      - 'traefik.http.services.jbprime.loadbalancer.passHostHeader=true'
+      - "traefik.http.services.jbprime.loadbalancer.server.port=3000"
+      - "traefik.http.services.jbprime.loadbalancer.server.scheme=http"
+      - "traefik.http.services.jbprime.loadbalancer.passHostHeader=true"
 
       # ---------------------------------------------------------------------
       #  🔒 WWW → NON-WWW (opcional). COMENTADO POR ENQUANTO (igual mamajula
-      #     não usa middlewares). Descomente DEPOIS que o domínio abrir sem 404.
+      #     não usa middlewares). Descomente DEPOIS que os 2 domínios abrirem sem 404.
       # ---------------------------------------------------------------------
-      # - 'traefik.http.middlewares.jbprime-nonwww.redirectregex.regex=^https?://www\.(.*)'
-      # - 'traefik.http.middlewares.jbprime-nonwww.redirectregex.replacement=https://${1}'
-      # - 'traefik.http.middlewares.jbprime-nonwww.redirectregex.permanent=true'
-      # - 'traefik.http.routers.jbprime.middlewares=jbprime-nonwww@docker'
+      # - "traefik.http.middlewares.jbprime-nonwww.redirectregex.regex=^https?://www\\.(.*)"
+      # - "traefik.http.middlewares.jbprime-nonwww.redirectregex.replacement=https://${1}"
+      # - "traefik.http.middlewares.jbprime-nonwww.redirectregex.permanent=true"
+      # - "traefik.http.routers.jbprime-www.middlewares=jbprime-nonwww@docker"
 
       # Watchtower (se tiver rodando) — auto-atualiza com nova tag
-      - 'com.centurylinklabs.watchtower.enable=true'
+      - "com.centurylinklabs.watchtower.enable=true"
 
 # =============================================================================
 #  REDE · MESMA DO PORTAINER / MAMAJULA (external=true, já existe)
