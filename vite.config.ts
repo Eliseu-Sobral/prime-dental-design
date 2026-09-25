@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // ── SOBRESCREVE PRESET NITRO PARA DEPLOY EM VPS/DOCKER ─────────────────
+  // Default do Lovable é cloudflare-module (builda worker, NÃO ABRE PORTA 3000).
+  // node-server gera um servidor Node standalone que ouve HOST:PORT (3000).
+  nitro: {
+    preset: "node-server",
+  },
 });
