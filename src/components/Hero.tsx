@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CLINIC, whatsappLink } from "@/lib/clinic";
-import heroImg from "@/assets/hero-clinica.jpg";
 import { CalendarCheck2, ShieldCheck, ArrowRight, Sparkles, Play } from "lucide-react";
 
 export function Hero() {
@@ -35,15 +34,29 @@ export function Hero() {
         className="absolute inset-0 -z-10 scale-110"
         style={{ transform: `translateY(${parallaxY}px) scale(1.08)` }}
       >
-        <img
-          src={heroImg}
-          alt="Recepção premium da clínica JB Odontologia Prime"
-          width={1920}
-          height={1088}
-          className="h-full w-full object-cover"
-          loading="eager"
-          decoding="async"
-        />
+        <picture>
+          {/* 📱 MOBILE (até 767px) — imagem retrato 9:16 exclusiva, foca no topo */}
+          <source media="(max-width: 767px)" srcSet="/hero-mobile.jpg" width={768} height={1365} />
+          {/* 🖥️ DESKTOP (≥768px) — imagem paisagem 16:9 exclusiva */}
+          <source
+            media="(min-width: 768px)"
+            srcSet="/hero-desktop.jpg"
+            width={1920}
+            height={1080}
+          />
+          {/* Fallback carrega desktop; object-position responsivo foca na área que tem conteúdo */}
+          <img
+            src="/hero-desktop.jpg"
+            alt="Recepção premium da clínica JB Odontologia Prime"
+            width={1920}
+            height={1080}
+            className="h-full w-full object-cover
+                       object-[50%_12%]
+                       md:object-[55%_18%]"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
       </div>
 
       <div
