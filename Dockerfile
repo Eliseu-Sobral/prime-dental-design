@@ -1,10 +1,14 @@
 # syntax=docker/dockerfile:1.7
 
-# =============================================================
-# STAGE 1 — Builder: instala deps e executa o build do Vite/Nitro
-# Saída: .output/server  (servidor Node standalone Nitro)
-#        .output/public  (assets estáticos servidos pelo Nitro)
-# =============================================================
+# =============================================================================
+#  JB ODONTOLOGIA PRIME · TanStack Start (Nitro standalone)
+#  PADRÃO MAMAJULA / KAMEETECH — multi-stage builder + runner
+#  Dependências de runtime: node + curl (para healthcheck CMD curl -fsS)
+# =============================================================================
+
+# -----------------------------------------------------------------
+#  STAGE 1 — Builder: instala deps e builda o Vite → Nitro .output/
+# -----------------------------------------------------------------
 FROM node:20-bookworm-slim AS builder
 
 ENV NODE_ENV=production \
@@ -15,50 +19,43 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# Copia apenas arquivos de deps para cache de camada do Docker
-COPY package.json package-lock.json* bun.lock* ./
+COPY package.json package-lock.json* ./
 
-# Usa npm (package-lock presente no repo) mesmo se bun.lock existir
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev=false --no-audit --no-fund || \
-    (test -f bun.lockb && npm i --no-audit --no-fund)
+    npm ci --omit=dev=false --no-audit --no-fund
 
-# Copia código fonte (ver .dockerignore para exclusões)
 COPY . .
 
-# Build do TanStack Start via Vite → Nitro gera .output/
 RUN npm run build
 
-# =============================================================
-# STAGE 2 — Runner: imagem leve, apenas Node + .output
-# =============================================================
-FROM node:20-alpine3.20 AS runner
+# -----------------------------------------------------------------
+#  STAGE 2 — Runner: imagem final (leve + curl disponível)
+# -----------------------------------------------------------------
+FROM node:20-bookworm-slim AS runner
 
 ENV NODE_ENV=production \
-    HOST=0.0.0.0 \
-    PORT=3000 \
+    TZ=America/Sao_Paulo \
     NITRO_PORT=3000 \
-    NITRO_HOST=0.0.0.0
+    NITRO_HOST=0.0.0.0 \
+    HOST=0.0.0.0 \
+    PORT=3000
 
 WORKDIR /app
 
-# Usuário não-root por segurança
-RUN addgroup -S nodejs && \
-    adduser  -S nodejs -G nodejs
+# Instala curl (exatamente como Kameetech/Mamajula usa no healthcheck)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl tzdata \
+ && ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
+ && echo "America/Sao_Paulo" > /etc/timezone \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copia .output gerado pelo builder (Nitro standalone)
+# Copia somente .output gerado pelo builder (Nitro standalone)
 COPY --from=builder /app/.output ./.output
-
-# Build do TanStack Start Nitro já vem com o package.json correto no .output/server,
-# mas em .output estático do Nitro basta rodar o entrypoint index.mjs
-RUN chown -R nodejs:nodejs /app/.output
-
-USER nodejs
 
 EXPOSE 3000
 
-# Healthcheck via rota raiz (200 ou 30x válidos)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD node -e "require('http').get('http://127.0.0.1:3000/',r=>{process.exit((r.statusCode>=200&&r.statusCode<400)?0:1)}).on('error',()=>process.exit(1))"
+# Healthcheck MESMO formato do modelo Kameetech (curl -fsS)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -fsS "http://127.0.0.1:3000/" >/dev/null || exit 1
 
 CMD ["node", ".output/server/index.mjs"]
