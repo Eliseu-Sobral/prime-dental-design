@@ -1,0 +1,126 @@
+services:
+  # =============================================================
+  # TRAEFIK — Proxy reverso + ACME (Let's Encrypt)
+  # - Escuta Docker socket → descobre serviços automaticamente por labels
+  # - Rede: network_public (EXTERNA, crie antes com docker network create network_public)
+  # - ACME resolver: leresolver (httpChallenge na porta 80, email obrigatório abaixo)
+  # =============================================================
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      # -------- Global --------
+      - --global.checknewversion=false
+      - --global.sendanonymoususage=false
+      - --log.level=WARN
+      # -------- Entrypoints --------
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # -------- HTTP → HTTPS redirect global --------
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      # -------- Docker provider --------
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=network_public
+      - --providers.docker.watch=true
+      # -------- ACME / Let's Encrypt: "leresolver" (nome exigido pelo usuário) --------
+      - --certificatesresolvers.leresolver.acme.httpchallenge=true
+      - --certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.leresolver.acme.email=TI_OU_ADMIN_EMAIL@jbodontologiaprime.com.br
+      - --certificatesresolvers.leresolver.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.leresolver.acme.tlschallenge=false
+      # Remova o comentário abaixo SOMENTE para TESTAR (certificado staging - não válido em navegadores)
+      # - --certificatesresolvers.leresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "traefik-certificates:/letsencrypt"
+    networks:
+      - network_public
+    labels:
+      - "traefik.enable=false"
+    security_opt:
+      - no-new-privileges:true
+
+  # =============================================================
+  # JB ODONTOLOGIA PRIME — App (TanStack Start / Nitro)
+  # Build: ./Dockerfile (multi-stage node 20 → runner alpine, porta 3000)
+  # Domínios atendidos:
+  #   - jbodontologiaprime.com.br   (principal)
+  #   - www.jbodontologiaprime.com.br (redireciona para o principal via middleware)
+  # TLS resolver: leresolver (nome exigido pelo usuário)
+  # =============================================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    image: jbodontologiaprime/site:latest
+    container_name: jbodontologiaprime
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NITRO_PORT: "3000"
+      NITRO_HOST: "0.0.0.0"
+    networks:
+      - network_public
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/',r=>process.exit((r.statusCode>=200&&r.statusCode<400)?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      - "traefik.enable=true"
+
+      # --- Router HTTPS: domínio PRINCIPAL ---
+      - "traefik.http.routers.jbprime-https.rule=Host(`jbodontologiaprime.com.br`)"
+      - "traefik.http.routers.jbprime-https.entrypoints=websecure"
+      - "traefik.http.routers.jbprime-https.tls=true"
+      - "traefik.http.routers.jbprime-https.tls.certresolver=leresolver"
+      - "traefik.http.routers.jbprime-https.service=jbprime-svc"
+      - "traefik.http.routers.jbprime-https.priority=100"
+
+      # --- Router HTTPS: WWW → redireciona para sem-www ---
+      - "traefik.http.routers.jbprime-www-https.rule=Host(`www.jbodontologiaprime.com.br`)"
+      - "traefik.http.routers.jbprime-www-https.entrypoints=websecure"
+      - "traefik.http.routers.jbprime-www-https.tls=true"
+      - "traefik.http.routers.jbprime-www-https.tls.certresolver=leresolver"
+      - "traefik.http.routers.jbprime-www-https.middlewares=jbprime-www-to-nonwww"
+      - "traefik.http.middlewares.jbprime-www-to-nonwww.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.jbprime-www-to-nonwww.redirectregex.replacement=https://$${1}"
+      - "traefik.http.middlewares.jbprime-www-to-nonwww.redirectregex.permanent=true"
+
+      # --- Middleware de segurança (HSTS, CORS leve, tamanho etc) ---
+      - "traefik.http.middlewares.jbprime-security.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.jbprime-security.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.jbprime-security.headers.stsPreload=true"
+      - "traefik.http.middlewares.jbprime-security.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.jbprime-security.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.jbprime-security.headers.frameDeny=false"
+      - "traefik.http.middlewares.jbprime-security.headers.contentTypeNosniff=true"
+      - "traefik.http.routers.jbprime-https.middlewares=jbprime-security@docker"
+
+      # --- Serviço apontando para :3000 do container ---
+      - "traefik.http.services.jbprime-svc.loadbalancer.server.port=3000"
+      - "traefik.http.services.jbprime-svc.loadbalancer.passhostheader=true"
+
+# =============================================================
+# REDE: network_public (EXTERNA — deve existir ANTES do up!)
+# Criar antes com:  docker network create network_public
+# =============================================================
+networks:
+  network_public:
+    name: network_public
+    external: true
+
+volumes:
+  traefik-certificates:
+    name: traefik-certificates

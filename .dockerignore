@@ -1,0 +1,57 @@
+# =============================================================
+# .dockerignore — TUDO que NÃO deve ir para o build context
+# Reduz tamanho do context, acelera build, evita vazamentos
+# =============================================================
+
+# Dependências e artefatos locais
+node_modules
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.bun
+
+# Build output (gerado dentro do container no stage builder)
+.output
+.nitro
+.vinxi
+.dist
+dist
+build
+
+# Controle de versão
+.git
+.gitignore
+.gitattributes
+.github
+
+# Configs da IDE e OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Lovable / Trae / sandbox
+.lovable
+.trae
+
+# Documentação / não-essencial
+README.md
+AGENTS.md
+*.md
+
+# Dev tools
+.eslintcache
+.prettiercache
+coverage
+.nyc_output
+
+# Secrets e env (NUNCA envie .env para imagem build)
+.env
+.env.*
+!.env.example
+
+# Assets temporários / placeholders de dev
+**/*.asset.json.tmp
+public/tmp
